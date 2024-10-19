@@ -33,6 +33,18 @@ type RemoteServiceDiscoveryResponse struct {
 	ModulesV1 string `json:"modules.v1"`
 }
 
+type ModuleVersionsResponse struct {
+    Modules []Module `json:"modules"`
+}
+
+type Module struct {
+    Versions []Version `json:"versions"`
+}
+
+type Version struct {
+    Version string `json:"version"`
+}
+
 func copyEmbedToFS(embedFS embed.FS, bfs billy.Filesystem, root string) error {
 	fs.WalkDir(embedFS, root, func(path string, de fs.DirEntry, err error) error {
 
@@ -100,6 +112,7 @@ func main() {
 
 	http.HandleFunc("GET /.well-known/terraform.json", func(w http.ResponseWriter, r *http.Request) {
 		u, _ := json.Marshal(RemoteServiceDiscoveryResponse{ModulesV1: "/api/modules/v1"})
+		w.Header().Set("content-type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(u)
 		return
@@ -111,13 +124,14 @@ func main() {
 			http.Error(w, "Error retrieving module versions", http.StatusInternalServerError)
 		}
 
-		tagsStrs := []string{}
+		versions := []Version{}
 		tags.ForEach(func(tr *plumbing.Reference) error {
-			tagsStrs = append(tagsStrs, tr.Name().Short())
+			versions = append(versions, Version{ Version: tr.Name().Short() })
 			return nil
 		})
 
-		tagsJson, _ := json.Marshal(tagsStrs)
+
+		tagsJson, _ := json.Marshal(ModuleVersionsResponse{ Modules: []Module{ Module{ Versions: versions} }})
 		w.WriteHeader(http.StatusOK)
 		w.Write(tagsJson)
 	})
@@ -135,6 +149,8 @@ func main() {
 		version := r.URL.Query().Get("ref")
 		if version == "" {
 			version = "main"
+		} else if !strings.HasPrefix(version, "v") {
+			version = "v" + version
 		}
 
 		if !strings.Contains(r.Header.Get("accept-encoding"), "gzip") {
@@ -175,7 +191,7 @@ func main() {
 
 		tw := tar.NewWriter(gw)
 		defer tw.Close()
-		
+
 		tree.ForEach(func(file *object.File) error {
 
 			if strings.HasPrefix(file.Name, name+"/") {
@@ -204,5 +220,5 @@ func main() {
 		
 	})
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServeTLS(":8080", "127.0.0.1.pem", "127.0.0.1-key.pem", nil))
 }
