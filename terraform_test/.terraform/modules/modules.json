@@ -1,1 +1,0 @@
-{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"code-server","Source":"127.0.0.1:8080/modules/code-server/coder","Version":"1.0.20","Dir":".terraform/modules/code-server"}]}
