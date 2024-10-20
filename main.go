@@ -1,7 +1,3 @@
-// The idea here is rather than pulling resources at runtime, we
-// serve the resources statically.
-// I'm thinking about just full on packing the resources into the binary,
-// no container bullshit needed
 package main
 
 import (
@@ -29,6 +25,8 @@ var modulesRepo embed.FS
 // The in memory git repository that the api can use as context
 var repo *git.Repository
 
+// Response types
+
 type RemoteServiceDiscoveryResponse struct {
 	ModulesV1 string `json:"modules.v1"`
 }
@@ -45,6 +43,7 @@ type Version struct {
 	Version string `json:"version"`
 }
 
+// Helper function to copy all the embedded source files into the billy file system
 func copyEmbedToFS(embedFS embed.FS, bfs billy.Filesystem, root string) error {
 	fs.WalkDir(embedFS, root, func(path string, de fs.DirEntry, err error) error {
 
@@ -52,7 +51,6 @@ func copyEmbedToFS(embedFS embed.FS, bfs billy.Filesystem, root string) error {
 			return err
 		}
 
-		// If it's a directory, the files will be looped over in later iterations.
 		if !de.IsDir() {
 			data, err := embedFS.ReadFile(path)
 			if err != nil {
@@ -61,7 +59,6 @@ func copyEmbedToFS(embedFS embed.FS, bfs billy.Filesystem, root string) error {
 
 			path = strings.TrimPrefix(path, "modules/")
 
-			// Sorry go embed directive, I'm doing cowboy shit.
 			if strings.HasPrefix(path, "the_literal_git_folder") {
 				path = strings.Replace(path, "the_literal_git_folder", ".git", 1)
 			}
