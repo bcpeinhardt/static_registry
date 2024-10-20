@@ -21,3 +21,7 @@ We do some sneaky renaming to get the .git folder past go:embed.
 When the binary is run, the embedded FS is copied into an in memory file system,
 which is read by go-git. We then drive the registry's responses by performing
 git operations on the repo (but in memory, no shelling out required).
+
+Notes:
+Current binary size: 21M Oct 20 14:46
+Real Memory Size during `terraform init`: 30.1 MB
