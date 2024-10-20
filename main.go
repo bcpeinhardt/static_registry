@@ -34,15 +34,15 @@ type RemoteServiceDiscoveryResponse struct {
 }
 
 type ModuleVersionsResponse struct {
-    Modules []Module `json:"modules"`
+	Modules []Module `json:"modules"`
 }
 
 type Module struct {
-    Versions []Version `json:"versions"`
+	Versions []Version `json:"versions"`
 }
 
 type Version struct {
-    Version string `json:"version"`
+	Version string `json:"version"`
 }
 
 func copyEmbedToFS(embedFS embed.FS, bfs billy.Filesystem, root string) error {
@@ -126,12 +126,11 @@ func main() {
 
 		versions := []Version{}
 		tags.ForEach(func(tr *plumbing.Reference) error {
-			versions = append(versions, Version{ Version: tr.Name().Short() })
+			versions = append(versions, Version{Version: tr.Name().Short()})
 			return nil
 		})
 
-
-		tagsJson, _ := json.Marshal(ModuleVersionsResponse{ Modules: []Module{ Module{ Versions: versions} }})
+		tagsJson, _ := json.Marshal(ModuleVersionsResponse{Modules: []Module{Module{Versions: versions}}})
 		w.WriteHeader(http.StatusOK)
 		w.Write(tagsJson)
 	})
@@ -181,11 +180,11 @@ func main() {
 
 		tree, err := commit.Files()
 		if err != nil {
-			http.Error(w, "Error reading files for the given commit: " + commit.Hash.String(), http.StatusInternalServerError)
+			http.Error(w, "Error reading files for the given commit: "+commit.Hash.String(), http.StatusInternalServerError)
 		}
 
-		w.Header().Set("Content-Disposition", "attachment; filename=" + name + ".tar.gz")
-    	w.Header().Set("Content-Type", "application/gzip")
+		w.Header().Set("Content-Disposition", "attachment; filename="+name+".tar.gz")
+		w.Header().Set("Content-Type", "application/gzip")
 
 		gw := gzip.NewWriter(w)
 		defer gw.Close()
@@ -202,15 +201,15 @@ func main() {
 					Size: file.Blob.Size,
 				}
 				if err := tw.WriteHeader(hdr); err != nil {
-					http.Error(w, "Error writing tar header for file: " + file.Name, http.StatusInternalServerError)
+					http.Error(w, "Error writing tar header for file: "+file.Name, http.StatusInternalServerError)
 				}
 				contents, err := file.Contents()
 				if err != nil {
-					http.Error(w, "Error retrieving cotnents for file: " + file.Name, http.StatusInternalServerError)
+					http.Error(w, "Error retrieving cotnents for file: "+file.Name, http.StatusInternalServerError)
 				}
 
 				if _, err := tw.Write([]byte(contents)); err != nil {
-					http.Error(w, "Error writing file contents for file: " + file.Name, http.StatusInternalServerError)
+					http.Error(w, "Error writing file contents for file: "+file.Name, http.StatusInternalServerError)
 				}
 			}
 
@@ -221,7 +220,6 @@ func main() {
 			http.Error(w, "Error closing tar writer", http.StatusInternalServerError)
 		}
 
-		
 	})
 
 	log.Fatal(http.ListenAndServeTLS(":8080", "certs/localhost-cert.pem", "certs/localhost-key.pem", nil))
