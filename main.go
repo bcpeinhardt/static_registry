@@ -147,6 +147,7 @@ func main() {
 	http.HandleFunc("GET /api/modules/{name}", func(w http.ResponseWriter, r *http.Request) {
 		name := r.PathValue("name")
 		version := r.URL.Query().Get("ref")
+
 		if version == "" {
 			version = "main"
 		} else if !strings.HasPrefix(version, "v") {
@@ -154,7 +155,7 @@ func main() {
 		}
 
 		if !strings.Contains(r.Header.Get("accept-encoding"), "gzip") {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			http.Error(w, "Must accept gzip encoding", http.StatusBadRequest)
 		}
 
 		tagRef, err := repo.Tag(version)
@@ -168,19 +169,19 @@ func main() {
 			// The tag is an annotated tag, get the commit it points to
 			commit, err = obj.Commit()
 			if err != nil {
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				http.Error(w, "Error retrieving commit for tag object", http.StatusInternalServerError)
 			}
 		} else {
 			// If it's a lightweight tag, the tagRef is already pointing to the commit
 			commit, err = repo.CommitObject(tagRef.Hash())
 			if err != nil {
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				http.Error(w, "Error retrieving commit for tag object", http.StatusInternalServerError)
 			}
 		}
 
 		tree, err := commit.Files()
 		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			http.Error(w, "Error reading files for the given commit: " + commit.Hash.String(), http.StatusInternalServerError)
 		}
 
 		w.Header().Set("Content-Disposition", "attachment; filename=" + name + ".tar.gz")
@@ -201,20 +202,23 @@ func main() {
 					Size: file.Blob.Size,
 				}
 				if err := tw.WriteHeader(hdr); err != nil {
-					http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+					http.Error(w, "Error writing tar header for file: " + file.Name, http.StatusInternalServerError)
 				}
-				contents, _ := file.Contents()
+				contents, err := file.Contents()
+				if err != nil {
+					http.Error(w, "Error retrieving cotnents for file: " + file.Name, http.StatusInternalServerError)
+				}
+
 				if _, err := tw.Write([]byte(contents)); err != nil {
-					http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+					http.Error(w, "Error writing file contents for file: " + file.Name, http.StatusInternalServerError)
 				}
 			}
 
 			return nil
 		})
 
-		err = tw.Close()
-		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		if err = tw.Close(); err != nil {
+			http.Error(w, "Error closing tar writer", http.StatusInternalServerError)
 		}
 
 		
