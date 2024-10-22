@@ -24,5 +24,6 @@ clean:
 	rm -rf $(CERT_DIR)
 	rm -rf ./assets
 	rm -rf ./versions.json
+	rm -rf ./.coder
 
 .PHONY: all init-certificates build clean
