@@ -101,7 +101,7 @@ func versionsHandler(w http.ResponseWriter, r *http.Request) {
 		return nil
 	})
 
-	tagsJson, _ := json.Marshal(ModuleVersionsResponse{Modules: []Module{Module{Versions: versions}}})
+	tagsJson, _ := json.Marshal(ModuleVersionsResponse{Modules: []Module{{Versions: versions}}})
 	w.WriteHeader(http.StatusOK)
 	w.Write(tagsJson)
 }
@@ -186,10 +186,6 @@ func downloadSourceTarHandler(w http.ResponseWriter, r *http.Request) {
 
 		return nil
 	})
-
-	if err = tw.Close(); err != nil {
-		http.Error(w, "Error closing tar writer", http.StatusInternalServerError)
-	}
 }
 
 func main() {
