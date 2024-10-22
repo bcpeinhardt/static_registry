@@ -1,12 +1,3 @@
-BINARY_NAME := registry
-MODULES_REPO_URL := https://github.com/coder/modules 
-MODULES_REPO_PATH := modules
-
-# We temporarily rename the .git folder to sneak it past 
-# go:embed. If you want to rename this, you'll need to rename it
-# in the Go source as well.
-GIT_DIR_NAME := the_literal_git_folder
-
 # We use `mkcert` to provide local development certificates
 CERT_DIR := certs
 CERT_KEY := $(CERT_DIR)/localhost-key.pem
@@ -14,11 +5,6 @@ CERT_CRT := $(CERT_DIR)/localhost-cert.pem
 
 # Default target: build the project
 all: build
-
-# Clone the modules repository
-clone-modules:
-	@if [ ! -d $(MODULES_REPO_PATH) ]; then git clone $(MODULES_REPO_URL) $(MODULES_REPO_PATH); fi
-	mv $(MODULES_REPO_PATH)/.git $(MODULES_REPO_PATH)/$(GIT_DIR_NAME)
 
 # Generate local development certificates using mkcert
 init-certificates: 
@@ -29,13 +15,14 @@ init-certificates:
 	@echo "Certificates generated: $(CERT_CRT), $(CERT_KEY)"
 
 # Build the Go project
-build: clone-modules init-certificates
-	go build -o $(BINARY_NAME) main.go
+build: init-certificates
+	go run ./cmd/build 
+	go run ./cmd/main
 
 # Clean up certificates and build artifacts
-clean: post-build-cleanup
+clean:
 	rm -rf $(CERT_DIR)
-	rm -rf $(MODULES_REPO_PATH)
-	rm -f $(BINARY_NAME)
+	rm -rf ./assets
+	rm -rf ./versions.json
 
-.PHONY: all clone-modules init-certificates build post-build-cleanup clean reset
+.PHONY: all init-certificates build clean
