@@ -1,12 +1,17 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 )
+
+//go:embed site/dist
+var frontend embed.FS // embedding the frontend
 
 // Response types
 
@@ -93,6 +98,12 @@ func main() {
 	http.HandleFunc("GET /api/modules/v1/modules/{name}/coder/versions", versionsHandler)
 	http.HandleFunc("GET /api/modules/v1/modules/{name}/coder/{version}/download", downloadVersionHandler)
 	http.HandleFunc("GET /api/modules/{name}", downloadSourceTarHandler)
+
+	dist, err := fs.Sub(frontend, "site/dist")
+	if err != nil {
+		log.Fatal(err)
+	}
+	http.Handle("GET /", http.FileServerFS(dist))
 
 	log.Fatal(http.ListenAndServeTLS(":8080", "certs/localhost-cert.pem", "certs/localhost-key.pem", nil))
 }

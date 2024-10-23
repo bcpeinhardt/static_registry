@@ -4,7 +4,7 @@ CERT_KEY := $(CERT_DIR)/localhost-key.pem
 CERT_CRT := $(CERT_DIR)/localhost-cert.pem
 
 # Default target: build the project
-all: build
+all: clean build run
 
 # Generate local development certificates using mkcert
 init-certificates: 
@@ -17,6 +17,9 @@ init-certificates:
 # Build the Go project
 build: init-certificates
 	go run ./cmd/build 
+
+run:
+	cd ./cmd/main/site && npm run build
 	go run ./cmd/main
 
 # Clean up certificates and build artifacts
@@ -26,4 +29,4 @@ clean:
 	rm -rf ./versions.json
 	rm -rf ./.coder
 
-.PHONY: all init-certificates build clean
+.PHONY: all init-certificates build clean run
